@@ -1,4 +1,3 @@
-from collections import deque, Counter
 assignments = []
 
 def cross(A, B):
