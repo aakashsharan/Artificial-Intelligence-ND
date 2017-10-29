@@ -2,18 +2,20 @@
 ## Introductory Project: Diagonal Sudoku Solver
 
 # Question 1 (Naked Twins)
-Q: How do we use constraint propagation to solve the naked twins problem?  
-A: *Student should provide answer here*
+Q: How do we use constraint propagation to solve the naked twins problem?
+A: Every square in a Sudoku board has constraints enforced by the rules of the game. One of the constraints is when two squares of a unit(i.e. a column, row or 3x3 block) has exactly two possible values that can be assigned to the squares, those values may not be assigned to the rest of the squares in the unit. We call such pairs of squares as Naked Twins. Using that kind of elimination is called Naked Twins Technique.
+
+We use constraint propagation to reduce the search space by applying the Naked Twins Technique. This pattern can also be extended to triplets (where three boxes have the same three possibilites) and more.
 
 # Question 2 (Diagonal Sudoku)
-Q: How do we use constraint propagation to solve the diagonal sudoku problem?  
-A: *Student should provide answer here*
+Q: How do we use constraint propagation to solve the diagonal sudoku problem?
+A: A diagonal sudoku is resolved using the same constraint propagation techniques as a regular sudoku: we apply repeatedly the available elimination techniques (elimination, only-choice and naked twins) to every square of the board. The only change we make here is that we add the constraint that no boxes in a same diagonal can take already used digits. By adding the two major diagonals to our list of units, our agent enforces these constraints allowing our sudoku solver to reduce the unsolved boxes in the puzzle for diagonal sudoku in addition to regular sudou.
 
 ### Install
 
 This project requires **Python 3**.
 
-We recommend students install [Anaconda](https://www.continuum.io/downloads), a pre-packaged Python distribution that contains all of the necessary libraries and software for this project. 
+We recommend to install [Anaconda](https://www.continuum.io/downloads), a pre-packaged Python distribution that contains all of the necessary libraries and software for this project.
 Please try using the environment we provided in the Anaconda lesson of the Nanodegree.
 
 ##### Optional: Pygame
@@ -32,13 +34,3 @@ If not, please see how to download pygame [here](http://www.pygame.org/download.
 ### Visualizing
 
 To visualize your solution, please only assign values to the values_dict using the `assign_value` function provided in solution.py
-
-### Submission
-Before submitting your solution to a reviewer, you are required to submit your project to Udacity's Project Assistant, which will provide some initial feedback.  
-
-The setup is simple.  If you have not installed the client tool already, then you may do so with the command `pip install udacity-pa`.  
-
-To submit your code to the project assistant, run `udacity submit` from within the top-level directory of this project.  You will be prompted for a username and password.  If you login using google or facebook, visit [this link](https://project-assistant.udacity.com/auth_tokens/jwt_login) for alternate login instructions.
-
-This process will create a zipfile in your top-level directory named sudoku-<id>.zip.  This is the file that you should submit to the Udacity reviews system.
-
