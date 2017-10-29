@@ -1,9 +1,13 @@
+from collections import deque, Counter
 assignments = []
 
 def cross(A, B):
     "Cross product of elements in A and elements in B."
     return [r+c for r in A for c in B]
 
+def dot(A, B):
+    "Dot product of elements in A and elements in B."
+    return [A[i]+B[i] for i,_ in enumerate(A)]
 
 """Generate useful constants"""
 rows = 'ABCDEFGHI'
@@ -13,20 +17,20 @@ boxes = cross(rows, cols)
 row_units = [cross(r, cols) for r in rows]
 col_units = [cross(rows, c) for c in cols]
 square_units = [cross(r, c) for r in {'ABC','DEF','GHI'} for c in {'123','456','789'}]
-unitlist = row_units+col_units+square_units
+diagonal_units = [dot(rows,cols), dot(rows,cols[::-1])]
+unitlist = row_units+col_units+square_units+diagonal_units
 #unit = complete rows, columns and 3x3 squares. Each units is a set of 9 boxes and there are 27 units in total
 #peers = for a particular box, peers will be all other boxes that belong to a common unit.
 units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
 peers = dict((s, set(sum(units[s], []))-set([s])) for s in boxes)
 
 def assign_value (values, box, value):
-
     """
-    Please use this function to update your values dictionary!
+    Function to update your values dictionary!
     Assigns a value to a given box. If it updates the board record it.
     """
     # Don't waste memory appending actions that don't actually change any
-    #values
+    # values
     if values[box] == value:
         return values
 
@@ -43,13 +47,22 @@ def naked_twins(values):
     Returns:
         the values dictionary with the naked twins eliminated from peers.
     """
-
-    # Find all instances of naked twins
-    # Eliminate the naked twins as possibilities for their peers
-    #for unit in unitlist:
-
-
-
+    for unit in unitlist:
+        # create a dictonary with the box.value as key and the box.key as value
+        twins = {}
+        for box in unit:
+            key = "".join(sorted(values[box]))
+            if (key in twins):
+                twins[key].append(box)
+            else:
+                twins[key] = [box]
+        # list the twin values
+        twin_values = [k for k in twins if len(k) == 2 and len(twins[k]) == 2]
+        # eliminate the twin values
+        for value in twin_values:
+            for box in (set(unit) - set(twins[value])):
+                assign_value(values, box, "".join(sorted(set(values[box]) - set(value))))
+    return values
 
 def grid_values(grid):
     """
@@ -83,10 +96,8 @@ def display(values):
 
 def eliminate(values):
     """Eliminate values from peers of each box with a single value.
-
     Go through all the boxes, and whenever there is a box with a single value,
     eliminate this value from the set of values of all its peers.
-
     Args:
         values: Sudoku in dictionary form.
     Returns:
@@ -101,10 +112,8 @@ def eliminate(values):
 
 def only_choice(values):
     """Finalize all values that are the only choice for a unit.
-
     Go through all the units, and whenever there is a unit with a value
     that only fits in one box, assign the value to this box.
-
     Input: Sudoku in dictionary form.
     Output: Resulting Sudoku in dictionary form after filling in only choices.
     """
@@ -116,35 +125,43 @@ def only_choice(values):
     return values
 
 def reduce_puzzle(values):
+    """
+    Iterate eliminate() and only_choice(). If at some point, there is a box with no available values, return False.
+    If the sudoku is solved, return the sudoku.
+    If after an iteration of both functions, the sudoku remains the same, return the sudoku.
+    Input: A sudoku in dictionary form.
+    Output: The resulting sudoku in dictionary form.
+    """
     stalled = False
     while not stalled:
         # check how many boxes have a determined value
-        solved_values_beore = len([box for box in values.keys() if len(values[box]) == 1])
+        solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
         # use the eliminate strategy
         values = eliminate(values)
         # use the only choice strategy
         values = only_choice(values)
+        # use the naked_twins
+        values = naked_twins(values)
         # check how many boxes have a determined value, to compare
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
         # if no new values were added, stop the loop
-        stalled = solved_values_before = solved_values_after
+        stalled = solved_values_before == solved_values_after
         # sanity check, return false if there is a box with zero available values
         if len([box for box in values.keys() if len(values[box]) == 0]):
             return False
-        return values
+    return values
 
 def search(values):
-    "using depth-first search and propagation, create a search tree and solve the sudoku"
-    # reduce the puzzle using previous function.
+    "Using depth-first search and propagation, try all possible values."
+    # First, reduce the puzzle using the previous function
     values = reduce_puzzle(values)
     if values is False:
-        return False # Failed earlier
-    if all(len(values[s] == 1 for s in boxes)):
-        return values # Solved.
-    # choose one of the unfilled squares with the fewest possibilities
+        return False ## Failed earlier
+    if all(len(values[s]) == 1 for s in boxes):
+        return values ## Solved!
+    # Choose one of the unfilled squares with the fewest possibilities
     n,s = min((len(values[s]), s) for s in boxes if len(values[s]) > 1)
-    # user recursion to solve each one of the resulting sudokus,
-    # and if one returns a value (not False), return that answer!
+    # Now use recurrence to solve each one of the resulting sudokus, and
     for value in values[s]:
         new_sudoku = values.copy()
         new_sudoku[s] = value
@@ -161,6 +178,8 @@ def solve(grid):
     Returns:
         The dictionary representation of the final sudoku grid. False if no solution exists.
     """
+    return search(grid_values(grid))
+
 
 if __name__ == '__main__':
     diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
